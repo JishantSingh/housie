@@ -18,11 +18,13 @@ class App {
 
 }
 
-var gm;
+let gm;
 App.main()
-    .then(app => app.createNewGame("rndBot", ["380938304370@c.us"]))
-    .then((game) => {
-        gm = game;
-        gm.mkGroup()
-    })
-    .then(() => gm.addParticipants(["380938304370@c.us"]))
+    .then(app => app.createNewGame("380938304370@c.us", ["918847586471@c.us"]))
+    .then((game) => gm = game)
+    .then(() => console.log(gm))
+    .then(() => gm.mkGroup())
+    .then((x) => console.log("1. -> " + x))
+    .then(() => console.log("2. ->  " + gm.groupId))
+    .then(() => gm.addParticipants("917318019101@c.us"))
+// .then(() => gm.addParticipants([""]))
