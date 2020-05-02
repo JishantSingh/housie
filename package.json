@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run1": "node App.js"
+    "run1": "node src/App.js",
+    "test": "node Test.js"
   },
   "dependencies": {
     "sulla": "2.3.14",
-    "game": "./game"
+    "game": "./src/game",
+    "constantsp": "./src/constantsp",
+    "util": "./src/util"
   },
   "keywords": [],
   "type": "module",

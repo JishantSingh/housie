@@ -10,17 +10,15 @@ class Game {
         this.groupName = host.concat("__", "group", Math.ceil(Math.random() * 100));
     }
 
-    mkGroup() {
+    async mkGroup() {
         console.assert(this.participants.length > 0,
             "At least 2 participants required to initiate a group")
         this.client.createGroup(this.groupName, this.participants)
-            .then((response) =>
-                new Promise((resolve, reject) =>
-                    setTimeout(() => resolve(this.setGid(response)), this.GROUP_CREATION_TIMEOUT)))
+            .then((response) => this.setGid(response))
     }
 
-    setGid(createGroupResponse) {
-        this.groupId = createGroupResponse.gid.user.toString().concat("@", createGroupResponse.gid.server.toString())
+    async setGid(createGroupResponse) {
+        this.groupId = await createGroupResponse.gid.user.toString().concat("@", await createGroupResponse.gid.server.toString())
         return this.groupId
     }
 
@@ -31,8 +29,11 @@ class Game {
         // this.participants = this.participants.concat(participants);
     }
 
-    static createGame(host, participants, client) {
-        return new Game(host, participants, client);
+    static async createGame(host, participants, client) {
+        let game =  new Game(host, participants, client);
+        // await game.mkGroup();
+        return game;
+
     }
 
 }

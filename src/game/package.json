@@ -1,8 +1,6 @@
 {
   "name": "game",
   "version": "1.0.0",
-  "dependencies": {
-    "sulla": "2.3.14"
-  },
+  "dependencies": {},
   "type": "module"
 }
