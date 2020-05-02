@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run1": "node src/App.js",
-    "test": "node Test.js"
+    "run1": "node --experimental-modules src/App.js",
+    "test": "node --experimental-modules Test.js"
   },
   "dependencies": {
     "sulla": "2.3.14",
