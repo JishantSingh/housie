@@ -1,7 +1,7 @@
 import {Game} from './game/Game.js'
 import sulla from 'sulla/dist/index.js'
-import {CREATE_NEW_GAME, CREATING_NEW_GAME, WELCOME, BOT_USER_ID, BYE} from './constantsp/index.js'
-import {format} from './util/index.js';
+import {CREATE_NEW_GAME, CREATING_NEW_GAME, WELCOME, BOT_USER_ID, BYE,SEND_GAME_ID} from './constantsp/index.js'
+import {format, createUniqueKey} from './util/index.js';
 
 class App {
     static client;
@@ -27,6 +27,9 @@ class App {
 
         let game = await Game.createGame(BOT_USER_ID, senderId, App.client);
         console.log(game);
+        game.id = createUniqueKey(App.gameMap)
+        App.gameMap.set(game.id,game)
+        await App.client.sendText(chatId,format(SEND_GAME_ID,[senderName,game.id]))
         await App.client.sendText(chatId, format(BYE,[senderName]));
     }
 
