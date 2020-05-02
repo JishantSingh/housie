@@ -17,8 +17,12 @@ class App {
     }
 
 }
+
 var gm;
 App.main()
-    .then(app => app.createNewGame("HousieHost", []))
-    .then((game) => {gm = game;game.mkGroup()})
+    .then(app => app.createNewGame("rndBot", ["380938304370@c.us"]))
+    .then((game) => {
+        gm = game;
+        gm.mkGroup()
+    })
     .then(() => gm.addParticipants(["380938304370@c.us"]))

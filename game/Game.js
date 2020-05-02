@@ -8,8 +8,7 @@ class Game {
     }
 
     mkGroup() {
-        this.groupId = this.client.createGroup(this.groupName, this.participants);
-        return this.groupId;
+        this.client.createGroup(this.groupName, this.participants).then(response =>  this.groupId = response.gid);
     }
 
     addParticipants(participants) {
