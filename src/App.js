@@ -21,7 +21,7 @@ export default class App {
   static hostIdToGameMap = new Map();
   static playerToGameMap = new Map();
   static GroupIdToFreeMap = new Map();
-  static CallBacksForChat = [App.callback1]; //This will contain all unctions for
+  static callBacksForChat = [App.callback1]; //This will contain all unctions for
   static main() {
     GROUP_IDS.forEach((i) => {
       App.GroupIdToFreeMap.set(i, 1);
@@ -35,7 +35,7 @@ export default class App {
     });
   }
 
-  static async clearGroups(client) {
+  static async initiateGroups(client) {
 
   }
 
@@ -61,16 +61,16 @@ export default class App {
     //This need to be done here as in createGame we are updating lots of arrays
 
     //Todo: Change the below sentence
-    if (newGroupId == "-1") {
+    if (newGroupId === "-1") {
       await App.client.sendText(
         chatId,
         "We don't have time for fuckers like you"
       );
-      // App.GroupIdtoFreeMap.set(GROUP_IDS[0], 1); //Testing
+      // App.GroupIdToFreeMap.set(GROUP_IDS[0], 1); //Testing
       return;
     }
 
-    //Issue 1 : WHy are we using BOT_USER_ID as the hostid ? Shouldn't we use ID of person who sent ng?
+    //Issue 1 : WHy are we using BOT_USER_ID as the hostId ? Shouldn't we use ID of person who sent ng?
     let game = await Game.createGame(
       BOT_USER_ID,
       [senderId],
@@ -104,10 +104,10 @@ export default class App {
   static privateChatListener(client) {
     //Either we need to write the whole code of onMessage in one or we can create a array of callbacks
     client.onMessage((message) => {
-      var i;
-      for (i = 0; i < App.CallBacksForChat.length; i++) {
+      let i;
+      for (i = 0; i < App.callBacksForChat.length; i++) {
         //console.log(i);
-        App.CallBacksForChat[i](message);
+        App.callBacksForChat[i](message);
       }
     });
   }
