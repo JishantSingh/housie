@@ -43,9 +43,9 @@ class Game {
   static findFree() {
     //This must be done after taking a lock
     var key, value;
-    for ([key, value] of App.GroupIdtoFreeMap) {
+    for ([key, value] of App.GroupIdToFreeMap) {
       if (value == 1) {
-        App.GroupIdtoFreeMap.set(key, 0);
+        App.GroupIdToFreeMap.set(key, 0);
         return key;
       }
     }

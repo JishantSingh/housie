@@ -20,11 +20,11 @@ export default class App {
   static gameIdToGameMap = new Map();
   static hostIdToGameMap = new Map();
   static playerToGameMap = new Map();
-  static GroupIdtoFreeMap = new Map();
+  static GroupIdToFreeMap = new Map();
   static CallBacksForChat = [App.callback1]; //This will contain all unctions for
   static main() {
     GROUP_IDS.forEach((i) => {
-      App.GroupIdtoFreeMap.set(i, 1);
+      App.GroupIdToFreeMap.set(i, 1);
     }); //set all groups to free
     return sulla.create("web_session").then((client) => {
       App.client = client;
@@ -35,6 +35,11 @@ export default class App {
     });
   }
 
+  static async clearGroups(client) {
+
+  }
+
+
   static async createNewGame(message) {
     const senderId = message.from;
     const chatId = message.chatId;
@@ -44,7 +49,7 @@ export default class App {
 
     //Issue 2: This check is not Working. Same person can create lots of different Group
     //Reason : HostId has Bot ID. refer Issue 1. Mostly change hostIdToGameMap to playerToGameMap is enough
-    if (App.hostIdToGameMap.has(message.from)) {
+    if (App.playerToGameMap.has(message.from)) {
       //Return His earlier Games Id
       await App.client.sendText(chatId, UNIQUE_GAME_PER_USER_CONSTRAINT);
       return;
