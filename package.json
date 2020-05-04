@@ -5,13 +5,15 @@
   "main": "index.js",
   "scripts": {
     "run1": "node --experimental-modules src/App.js",
-    "test": "node --experimental-modules Test.js"
+    "test": "node --experimental-modules Test.js",
+    "test2": "node Test2.js"
   },
   "dependencies": {
     "sulla": "2.3.14",
     "game": "./src/game",
     "constantsp": "./src/constantsp",
-    "util": "./src/util"
+    "util": "./src/util",
+    "async-lock": "1.2.2"
   },
   "keywords": [],
   "type": "module",
