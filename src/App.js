@@ -121,8 +121,11 @@ export default class App {
         }
     }
 
+    /**
+     * Either we need to write the whole code of onMessage in one or we can create a array of callbacks
+     * @param client
+     */
     static privateChatListener(client) {
-        //Either we need to write the whole code of onMessage in one or we can create a array of callbacks
         client.onMessage((message) => App.callBacksForChat.forEach(f => f(message)));
     }
 
@@ -152,10 +155,6 @@ export default class App {
         ]);
         //TODO : Here we should retry sometime
 
-        // let gameId = await App.client.onMessage((message1) =>
-        //   parseInt(message1.body)
-        // );
-
         console.log(App.gameIdToGameMap);
         if (!App.gameIdToGameMap.has(gameId)) {
             await App.client.sendText(chatId, INVALID_GAME_ID, message.id.toString());
@@ -168,11 +167,4 @@ export default class App {
 }
 
 App.main();
-// .then(app => app.createNewGame("380938304370@c.us", ["918847586471@c.us"]))
-// .then((game) => gm = game)
-// .then(() => console.log(gm))
-// .then(() => gm.mkGroup())
-// .then((x) => console.log("1. -> " + x))
-// .then(() => console.log("2. ->  " + gm.groupId))
-// .then(() => gm.addParticipants("917318019101@c.us"))
-// .then(() => gm.addParticipants([""]))
+
