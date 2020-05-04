@@ -27,10 +27,11 @@ export default class App {
         GROUP_IDS.forEach((i) => {
             App.GroupIdToFreeMap.set(i, 1);
         }); //set all groups to free
-        sulla.create("web_session").then(async client => {
-            App.client = client;
-            return App.initiateGroups(client)
-        })
+        sulla.create("web_session")
+            .then(async client => {
+                App.client = client;
+                return App.initiateGroups(client)
+            })
             .then(groups => App.freeGroups = groups)
             .then(async () => App.privateChatListener(App.client));
         return 0;
