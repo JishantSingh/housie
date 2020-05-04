@@ -11,6 +11,8 @@ import {
     JOIN_GAME,
     INVALID_GAME_ID,
     GROUP_IDS,
+    ADD_REMOVE_PARTICIPANT_KNOWN_ERROR,
+    ALL_GROUPS_FULL
 } from "./constantsp/index.js";
 import {format} from "./util/index.js";
 
@@ -20,12 +22,12 @@ export default class App {
     static groupIdToGameMap = new Map();
     static gameIdToGameMap = new Map();
     static hostIdToGameMap = new Map();
-    static playerToGameMap = new Map();
-    static GroupIdToFreeMap = new Map();
-    static callBacksForChat = [App.callback1]; //This will contain all unctions for
+    static playerIdToGameMap = new Map();
+    static groupIdToFreeMap = new Map();
+    static callBacksForChat = [App.primaryRouter]; //This will contain all unctions for
     static main() {
         GROUP_IDS.forEach((i) => {
-            App.GroupIdToFreeMap.set(i, 1);
+            App.groupIdToFreeMap.set(i, 1);
         }); //set all groups to free
         sulla.create("web_session")
             .then(async client => {
@@ -46,8 +48,11 @@ export default class App {
         async function cleanGroup(groupId) {
             await client.clearChat(groupId)
             await client.getGroupMembersIds(groupId)
-                .then(members => members.forEach(member => {
-                    if (member._serialized !== BOT_USER_ID) client.removeParticipant(groupId, member._serialized)
+                .then(members => members.forEach(async member => {
+                    if (member._serialized !== BOT_USER_ID) {
+                        client.removeParticipant(groupId, member._serialized)
+                            .catch(e => console.log(ADD_REMOVE_PARTICIPANT_KNOWN_ERROR))
+                    }
                 }))
             return groupId
         }
@@ -67,46 +72,37 @@ export default class App {
         const senderName = message.sender.pushname;
         //Issue 3 : here once the senderName came undefined not sure how
         //Although it was not reproduced
-
-        //Issue 2: This check is not Working. Same person can create lots of different Group
-        //Reason : HostId has Bot ID. refer Issue 1. Mostly change hostIdToGameMap to playerToGameMap is enough
-        if (App.playerToGameMap.has(message.from)) {
-            //Return His earlier Games Id
-            await App.client.sendText(chatId, UNIQUE_GAME_PER_USER_CONSTRAINT);
+        if (App.playerIdToGameMap.has(message.sender.id)) {
+            await App.client.sendText(chatId,
+                format(UNIQUE_GAME_PER_USER_CONSTRAINT, [App.playerIdToGameMap.get(message.sender.id).id]));
             return;
         }
         await App.client.sendText(chatId, format(WELCOME, [senderName]));
         await App.client.sendText(chatId, CREATING_NEW_GAME);
-
-        let newGroupId = Game.findFree();
-        //This need to be done here as in createGame we are updating lots of arrays
-
-        //Todo: Change the below sentence
-        if (newGroupId === "-1") {
+        let groupId = App.freeGroups.pop()
+        if (groupId === undefined) {
             await App.client.sendText(
                 chatId,
-                "We don't have time for fuckers like you"
+                ALL_GROUPS_FULL
             );
-            // App.GroupIdToFreeMap.set(GROUP_IDS[0], 1); //Testing
             return;
         }
-
-        //Issue 1 : WHy are we using BOT_USER_ID as the hostId ? Shouldn't we use ID of person who sent ng?
-        let game = await Game.createGame(
-            BOT_USER_ID,
-            [senderId],
-            App.client,
-            newGroupId
-        );
-
-        await App.client.sendText(
-            chatId,
-            format(SEND_GAME_ID, [senderName, game.id])
-        );
-        await App.client.sendText(chatId, format(BYE, [senderName]));
+        Game.createGame(senderId, App.client, groupId)
+            .then(async game => {
+                App.gameIdToGameMap.set(game.id, game);
+                App.hostIdToGameMap.set(game.hostId, game);
+                App.groupIdToGameMap.set(game.groupId, game);
+                App.playerIdToGameMap.set(game.hostId, game);
+                App.client.sendText(
+                    chatId,
+                    format(SEND_GAME_ID, [senderName, game.id])
+                );
+            })
+            .catch(e => console.error(e))
+        // await App.client.sendText(chatId, format(BYE, [senderName]));
     }
 
-    static callback1(message) {
+    static primaryRouter(message) {
         switch (message.body) {
             case CREATE_NEW_GAME:
                 //need to avoid 2 guys getting the same game
@@ -118,19 +114,13 @@ export default class App {
                 break;
 
             default:
-                console.log(message.body);
+                console.log(message);
         }
     }
 
     static privateChatListener(client) {
         //Either we need to write the whole code of onMessage in one or we can create a array of callbacks
-        client.onMessage((message) => {
-            let i;
-            for (i = 0; i < App.callBacksForChat.length; i++) {
-                //console.log(i);
-                App.callBacksForChat[i](message);
-            }
-        });
+        client.onMessage((message) => App.callBacksForChat.forEach(f => f(message)));
     }
 
     static async timeout(ms) {
@@ -141,7 +131,7 @@ export default class App {
         const senderId = message.from;
         const chatId = message.chatId;
         const senderName = message.sender.pushname;
-        if (App.playerToGameMap.has(senderId)) {
+        if (App.playerIdToGameMap.has(senderId)) {
             await App.client.sendText(chatId, UNIQUE_GAME_PER_USER_CONSTRAINT);
             return;
         }
