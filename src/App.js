@@ -12,7 +12,8 @@ import {
     INVALID_GAME_ID,
     GROUP_IDS,
     ADD_REMOVE_PARTICIPANT_KNOWN_ERROR,
-    ALL_GROUPS_FULL
+    ALL_GROUPS_FULL,
+    GAME_START_LOGGING
 } from "./constantsp/index.js";
 import {format} from "./util/index.js";
 
@@ -97,6 +98,7 @@ export default class App {
                     chatId,
                     format(SEND_GAME_ID, [senderName, game.id])
                 );
+                return game.id
             })
             .catch(e => console.error(e))
         // await App.client.sendText(chatId, format(BYE, [senderName]));
@@ -106,7 +108,8 @@ export default class App {
         switch (message.body) {
             case CREATE_NEW_GAME:
                 //need to avoid 2 guys getting the same game
-                App.createNewGame(message);
+                App.createNewGame(message)
+                    .then(id => console.info(GAME_START_LOGGING, id));
                 break;
 
             case JOIN_GAME:
