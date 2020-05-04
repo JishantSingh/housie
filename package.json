@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run1": "node --experimental-modules src/App.js",
+    "run1": "node --experimental-modules --trace-warnings src/App.js",
     "test": "node --experimental-modules Test.js",
     "test2": "node Test2.js"
   },

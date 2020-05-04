@@ -16,6 +16,7 @@ import {format} from "./util/index.js";
 
 export default class App {
     static client;
+    static freeGroups = [];
     static groupIdToGameMap = new Map();
     static gameIdToGameMap = new Map();
     static hostIdToGameMap = new Map();
@@ -26,21 +27,27 @@ export default class App {
         GROUP_IDS.forEach((i) => {
             App.GroupIdToFreeMap.set(i, 1);
         }); //set all groups to free
-        return sulla.create("web_session").then(async client => {
+        sulla.create("web_session").then(async client => {
             App.client = client;
-            App.initiateGroups(client)
-            // App.privateChatListener(client);
-
-            // App.createNewGame("380938304370@c.us", ["918847586471@c.us"])
-            // App.runApp("")
-        });
+            return App.initiateGroups(client)
+        })
+            .then(groups => App.freeGroups = groups)
+            .then(async () => App.privateChatListener(App.client));
+        return 0;
     }
 
+    /**
+     *
+     * @param client: Whatsapp client
+     * @returns {Promise<Chat[]>}: list of refreshed groupIds
+     */
     static async initiateGroups(client) {
         async function cleanGroup(groupId) {
             await client.clearChat(groupId)
-            // client.getGroupMembersIds(groupId)
-            //     .then(members => members.forEach(member => client.removeParticipant(groupId, member._serialized)))
+            await client.getGroupMembersIds(groupId)
+                .then(members => members.forEach(member => {
+                    if (member._serialized !== BOT_USER_ID) client.removeParticipant(groupId, member._serialized)
+                }))
             return groupId
         }
 
@@ -49,8 +56,7 @@ export default class App {
                 groups => groups
                     .map(group => group.id._serialized)
                     .map(async groupId => await cleanGroup(groupId)))
-        //Issue: How to the returned promise to resolve?
-        console.log(newGroups)
+        return Promise.all(newGroups)
     }
 
 
