@@ -138,11 +138,12 @@ export default class App {
         const chatId = message.chatId;
         const senderName = message.sender.pushname;
         if (App.playerIdToGameMap.has(senderId)) {
-            await App.client.sendText(chatId, UNIQUE_GAME_PER_USER_CONSTRAINT);
+            await App.client.sendText(chatId,
+                format(UNIQUE_GAME_PER_USER_CONSTRAINT, [App.playerIdToGameMap.get(message.sender.id).id]));
             return;
         }
-        App.client.sendText(chatId, "Please paste the GameID");
-        var gameId;
+        await App.client.sendText(chatId, "Please paste the GameID");
+        let gameId;
 
         //For now I'm wating 3s but ideally we should kee rerying until he enters
         await App.timeout(3000);
