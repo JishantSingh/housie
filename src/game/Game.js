@@ -1,6 +1,6 @@
 import {createUniqueKey} from "../util/index.js";
 import App from "../App.js";
-import {BOT_USER_ID, MISSING_OPTIONAL_ARGUMENT} from "../constantsp/index.js";
+import {BOT_USER_ID, MISSING_OPTIONAL_ARGUMENT, FAILED_CREATE_GAME_LOG} from "../constantsp/index.js";
 
 class Game {
     static GROUP_CREATION_TIMEOUT = 1000;
@@ -28,15 +28,36 @@ class Game {
             .concat("@", response.gid.server.toString());
     }
 
+    // async makeAdmin()
+
     async addParticipantToGroup(client, participant) {
-        client.addParticipant(this.groupId, participant.id)
+        await client.addParticipant(this.groupId, participant.id)
             .catch(() => console.warn(MISSING_OPTIONAL_ARGUMENT))
 
-        App.playerIdToGameIdMap.set(participant.id, this.id)
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
 
+        async function checkParticipant(participantId, groupId) {
+            let members = await client.getGroupMembersIds(groupId)
+            let memberIds = members.map(x => x._serialized)
+            return memberIds.includes(participantId)
+        }
+
+        let isParticipantAdded = false;
+        let retires = 10
+        while (!isParticipantAdded && retires > 0) {
+            await sleep(2000)
+            isParticipantAdded = await checkParticipant(participant.id, this.groupId)
+                .catch(e => console.log(e))
+            retires--;
+        }
+        if (!isParticipantAdded) throw FAILED_CREATE_GAME_LOG
         await client.promoteParticipant(this.groupId, participant.id)
+            .catch((e) => console.warn(MISSING_OPTIONAL_ARGUMENT))
 
         this.participants.concat(participant);
+        return true
     }
 
     async groupListener(client) {
@@ -46,8 +67,12 @@ class Game {
     static async createGame(host, client, newGroupId) {
         let game = new Game(host, newGroupId);
         return game.addParticipantToGroup(client, host)
-            // .then(() => game.groupListener(client))
+            .then(() => game.groupListener(client))
             .then(() => game)
+            .catch((e) => {
+                console.log(e)
+                return undefined
+            })
         // .catch(() => console.warn(MISSING_OPTIONAL_ARGUMENT))
     }
 }

@@ -6,17 +6,15 @@ import {
     WELCOME,
     BOT_USER_ID,
     BYE,
-    SEND_GAME_ID,
     UNIQUE_GAME_PER_USER_CONSTRAINT,
-    JOIN_GAME,
-    INVALID_GAME_ID,
     GROUP_IDS,
     MISSING_OPTIONAL_ARGUMENT,
     ALL_GROUPS_FULL,
     GAME_START_LOGGING,
-    REQUEST_GAME_ID,
     JOIN_GAME_MESSAGE_TO_HOST,
-    REQUEST_HOST_TO_ADD_PARTICIPANTS
+    REQUEST_HOST_TO_ADD_PARTICIPANTS,
+    FAILED_CREATE_GAME_MESSAGE,
+    FAILED_CREATE_GAME_LOG
 } from "./constantsp/index.js";
 import {format} from "./util/index.js";
 
@@ -90,16 +88,21 @@ export default class App {
         }
         return Game.createGame(host, App.client, groupId)
             .then(async game => {
-                App.gameIdToGameMap.set(game.id, game);
-                App.hostIdToGameIdMap.set(game.host.id, game.id);
-                App.groupIdToGameIdMap.set(game.groupId, game.id);
-                App.playerIdToGameIdMap.set(game.host.id, game.id);
-                App.client.sendText(chatId, JOIN_GAME_MESSAGE_TO_HOST)
-                    .then(() => App.client.sendText(groupId, REQUEST_HOST_TO_ADD_PARTICIPANTS))
-                return Promise.resolve(game.groupId)
+                if (game !== undefined) {
+                    App.gameIdToGameMap.set(game.id, game);
+                    App.hostIdToGameIdMap.set(game.host.id, game.id);
+                    App.groupIdToGameIdMap.set(game.groupId, game.id);
+                    App.playerIdToGameIdMap.set(game.host.id, game.id);
+                    App.client.sendText(chatId, JOIN_GAME_MESSAGE_TO_HOST)
+                        .then(() => App.client.sendText(groupId, REQUEST_HOST_TO_ADD_PARTICIPANTS))
+                    return Promise.resolve(game.groupId)
+                } else {
+                    await this.cleanGroup(groupId)
+                    await App.client.sendText(host.id, FAILED_CREATE_GAME_MESSAGE)
+                    return undefined
+                }
             })
             .catch(e => console.error(e))
-        // .finally((groupId) => App.cleanGroup(groupId))
     }
 
     static primaryRouter(message) {
@@ -109,9 +112,9 @@ export default class App {
                 App.createNewGame(message)
                     .then(id => {
                             if (id !== undefined) console.info(GAME_START_LOGGING, id)
+                            else console.error(format(FAILED_CREATE_GAME_LOG, [message.sender.id]))
                         }
                     )
-                ;
                 break;
 
             default:
@@ -130,60 +133,6 @@ export default class App {
     static async timeout(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
-
-    // static async joinGame(message) {
-    //     const senderId = message.from;
-    //     const chatId = message.chatId;
-    //     const senderName = message.sender.pushname;
-    //     if (App.playerIdToGameIdMap.has(senderId)) {
-    //         await App.client.sendText(chatId,
-    //             format(UNIQUE_GAME_PER_USER_CONSTRAINT, [App.playerIdToGameIdMap.get(message.sender.id).id]));
-    //         return;
-    //     }
-    //     await App.client.sendText(chatId, "Please paste the GameID");
-    //     let retries = 5
-    //     let isRetry = false
-    //
-    //     async function requestGameId() {
-    //         await App.client.sendText(chatId, REQUEST_GAME_ID);
-    //     }
-    //
-    //     async function getGameIdFromChat() {
-    //         retries--;
-    //         if (isRetry) await App.client.sendText(chatId, "Please paste the GameID")
-    //
-    //
-    //         isRetry = true
-    //     }
-    //
-    //     const countDown = setInterval(() => {
-    //         getGameIdFromChat()
-    //         if (retries === 0) window.clearInterval(countDown)
-    //     }, 5000);
-    //
-    //     let gameId;
-    //
-    //     //For now I'm wating 3s but ideally we should kee retrying until he enters
-    //     await setTimeout(setInterval)
-    //     await App.timeout(3000);
-    //     await Promise.all([
-    //         App.client.loadAndGetAllMessagesInChat(chatId).then((chats) => {
-    //             console.log(chats[chats.length - 1].body);
-    //             gameId = parseInt(chats[chats.length - 1].body);
-    //             console.log(gameId);
-    //         }),
-    //     ]);
-    //     //TODO : Here we should retry sometime
-    //
-    //     console.log(App.gameIdToGameMap);
-    //     if (!App.gameIdToGameMap.has(gameId)) {
-    //         await App.client.sendText(chatId, INVALID_GAME_ID, message.id.toString());
-    //         return;
-    //     }
-    //     let game = App.gameIdToGameMap.get(gameId);
-    //     console.log(senderId);
-    //     game.addParticipant(senderId);
-    // }
 }
 
 App.main();
