@@ -1,13 +1,12 @@
 import {createUniqueKey} from "../util/index.js";
 import App from "../App.js";
-import {BOT_USER_ID, ADD_REMOVE_PARTICIPANT_KNOWN_ERROR} from "../constantsp/index.js";
+import {BOT_USER_ID, MISSING_OPTIONAL_ARGUMENT} from "../constantsp/index.js";
 
 class Game {
     static GROUP_CREATION_TIMEOUT = 1000;
 
-    constructor(hostId, client, groupId) {
-        this.client = client;
-        this.hostId = hostId;
+    constructor(host, groupId) {
+        this.host = host;
         this.id = createUniqueKey(App.gameIdToGameMap);
         this.groupName = "HOUSIE_GAME_" + this.id;
         this.groupId = groupId;
@@ -15,10 +14,10 @@ class Game {
         this.createdOn = Date.now();
     }
 
-    async createGroup() {
+    async createGroup(client) {
         console.log(this.groupName, this.participants.concat(BOT_USER_ID));
 
-        let response = await this.client.createGroup(
+        let response = await client.createGroup(
             this.groupName,
             this.participants
         );
@@ -29,21 +28,27 @@ class Game {
             .concat("@", response.gid.server.toString());
     }
 
-    async addParticipant(userId) {
-        await this.client.addParticipant(this.groupId, userId)
-            .catch(e => console.log(ADD_REMOVE_PARTICIPANT_KNOWN_ERROR))
-        App.playerIdToGameMap.set(userId, this);
-        this.participants.concat(userId);
+    async addParticipantToGroup(client, participant) {
+        client.addParticipant(this.groupId, participant.id)
+            .catch(() => console.warn(MISSING_OPTIONAL_ARGUMENT))
+
+        App.playerIdToGameIdMap.set(participant.id, this.id)
+
+        await client.promoteParticipant(this.groupId, participant.id)
+
+        this.participants.concat(participant);
     }
 
+    async groupListener(client) {
+        client.onParticipantsChanged(this.groupId, (x) => console.log(x))
+    }
 
-    static async createGame(hostId, client, newGroupId) {
-        let game = new Game(hostId, client, newGroupId);
-
-        await game.addParticipant(game.participants[0]);
-        // await game.add
-        // game.groupId = await game.createGroup();
-        return game;
+    static async createGame(host, client, newGroupId) {
+        let game = new Game(host, newGroupId);
+        return game.addParticipantToGroup(client, host)
+            // .then(() => game.groupListener(client))
+            .then(() => game)
+        // .catch(() => console.warn(MISSING_OPTIONAL_ARGUMENT))
     }
 }
 
