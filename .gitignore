@@ -1,3 +1,6 @@
 .idea
 node_modules
 web_session
+Test*
+session
+testFile.json

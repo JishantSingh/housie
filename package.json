@@ -4,11 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run1": "node App.js"
+    "run1": "node --experimental-modules --trace-warnings src/App.js",
+    "test": "node --experimental-modules Test.js",
+    "test2": "node Test2.js"
   },
   "dependencies": {
     "sulla": "2.3.14",
-    "game": "./game"
+    "game": "./src/game",
+    "constantsp": "./src/constantsp",
+    "util": "./src/util",
+    "async-lock": "1.2.2"
   },
   "keywords": [],
   "type": "module",
